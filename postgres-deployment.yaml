@@ -1,0 +1,82 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kong-pv
+spec:
+  capacity:
+    storage: 250Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/var/lib/postgresql/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kong-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 250Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-db-service
+spec:
+  type: NodePort
+  selector:
+    app: kong-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+      nodePort: 30008
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kong-db-deployment
+  labels:
+    app: kong-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kong-db
+  template:
+    metadata:
+      labels:
+        app: kong-db
+    spec:
+      volumes:
+        - name: kong-pv
+          persistentVolumeClaim:
+            claimName: kong-pvc
+      containers:
+        - name: kong-database
+          image: postgres:9.6
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-url
+                  key: database
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-user-pass
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-user-pass
+                  key: password
+          volumeMounts:
+            - name: kong-pv
+              mountPath: /var/lib/postgresql/data
+          ports:
+            - containerPort: 5432
+              name: kong-database

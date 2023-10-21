@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: konga-prepare-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: konga-prepare-deployment
+  template:
+    metadata:
+      name: konga-prepare-deployment
+      labels:
+        app: konga-prepare-deployment
+    spec:
+      containers:
+      - name: konga-prepare-deployment
+        image: pantsel/konga:latest
+        imagePullPolicy: Always
+        args:
+        - "-c"
+        - "prepare"
+        - "-a"
+        - "postgres"
+        - "-u"
+        - "postgresql://kong:kong@kong-db-service:5432/kong"

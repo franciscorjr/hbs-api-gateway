@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db-migration
+  labels:
+    name: db-migration
+spec:
+  containers:
+    - name: db-migration
+      image: kong:1.5
+      command: ["kong", "migrations", "bootstrap"]
+      imagePullPolicy: Always
+      env:
+        - name: KONG_PG_HOST
+          value: "kong-db-service"
+        - name: KONG_PG_PASSWORD
+          value: "kong"
